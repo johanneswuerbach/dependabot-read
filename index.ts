@@ -9,9 +9,17 @@ interface Notification {
   }
 }
 
-const ignoredUsers = ['dependabot[bot]', 'dependabot-preview[bot]']
+const markAsRead = async  (octokit: Octokit, notification: Notification, logDetails?: string): Promise<boolean> => {
+  console.log(`Marking as read: ${notification.subject.title}${logDetails}`)
+  await octokit.activity.markThreadAsRead({ thread_id: parseInt(notification.id, 10) })
 
-const maybeMarkAsRead = async (octokit: Octokit, notification: Notification): Promise<boolean> => {
+  return true
+}
+
+const ignoredUsers = ['dependabot[bot]', 'dependabot-preview[bot]']
+const ignoreReleasesInOrg = 'contentful'
+
+const maybeMarkPullRequestAsRead = async (octokit: Octokit, notification: Notification): Promise<boolean> => {
   const prResp = await octokit.request(`GET ${notification.subject.url}`) as RestEndpointMethodTypes["pulls"]["get"]["response"]
   const { data: pr } = prResp
 
@@ -19,10 +27,7 @@ const maybeMarkAsRead = async (octokit: Octokit, notification: Notification): Pr
     return false
   }
 
-  console.log(`Marking as read: ${notification.subject.title} by ${pr.user.login}`)
-  await octokit.activity.markThreadAsRead({ thread_id: parseInt(notification.id, 10) })
-
-  return true
+  return markAsRead(octokit, notification, ` by ${pr.user.login}`)
 }
 
 const init = async () => {
@@ -35,11 +40,13 @@ const init = async () => {
     for await (const notificationsResponse of octokit.paginate.iterator(options)) {
       const markAsReadPromises = []
       for (const notification of notificationsResponse.data) {
-        if (notification.subject.type != 'PullRequest') {
-          continue
+        if (notification.subject.type == 'PullRequest') {
+          markAsReadPromises.push(maybeMarkPullRequestAsRead(octokit, notification))
         }
 
-        markAsReadPromises.push(maybeMarkAsRead(octokit, notification))
+        if (notification.subject.type == 'Release' && notification.subject.url.includes(`repos/${ignoreReleasesInOrg}/`)) {
+          markAsReadPromises.push(markAsRead(octokit, notification, ' ignored release'))
+        }
       }
       const result = await Promise.all(markAsReadPromises)
 
