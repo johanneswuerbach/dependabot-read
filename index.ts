@@ -3,6 +3,9 @@ import { ActivityListNotificationsForAuthenticatedUserResponseData } from "@octo
 
 interface Notification {
   id: string;
+  repository: {
+    full_name: string
+  }
   subject: {
     url: string
     title: string
@@ -10,7 +13,7 @@ interface Notification {
 }
 
 const markAsRead = async  (octokit: Octokit, notification: Notification, logDetails?: string): Promise<boolean> => {
-  console.log(`Marking as read: ${notification.subject.title}${logDetails}`)
+  console.log(`Marking as read: [${notification.repository.full_name}] ${notification.subject.title}${logDetails}`)
   await octokit.activity.markThreadAsRead({ thread_id: parseInt(notification.id, 10) })
 
   return true
