@@ -1,5 +1,4 @@
 import { Octokit, RestEndpointMethodTypes } from "@octokit/rest";
-import { ActivityListNotificationsForAuthenticatedUserResponseData } from "@octokit/types"
 
 interface Notification {
   id: string;
@@ -53,8 +52,16 @@ const init = async () => {
       }
       const result = await Promise.all(markAsReadPromises)
 
-      // We need to rerun as notifictions can shift pages while we mark others as read
+      // We need to rerun as notifications can shift pages while we mark others as read
       rerun = !!result.find((read) => read)
+    }
+
+    if (rerun) {
+      // There seems to be a delay until the notification list is updated
+      await new Promise((resolve) => {
+        console.log('Waiting before retrying.')
+        setTimeout(() => resolve(), 2000)
+      })
     }
   }
 }
