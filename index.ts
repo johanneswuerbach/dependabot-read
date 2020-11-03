@@ -50,10 +50,12 @@ const init = async () => {
           markAsReadPromises.push(markAsRead(octokit, notification, ' ignored release'))
         }
       }
-      const result = await Promise.all(markAsReadPromises)
+      const results = await Promise.all(markAsReadPromises)
 
-      // We need to rerun as notifications can shift pages while we mark others as read
-      rerun = !!result.find((read) => read)
+      if (!rerun) {
+        // We need to rerun as notifications can shift pages while we mark others as read
+        rerun = results.includes(true)
+      }
     }
 
     if (rerun) {
