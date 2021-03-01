@@ -11,7 +11,7 @@
   "author": "",
   "license": "UNLICENSED",
   "dependencies": {
-    "@octokit/rest": "^18.0.12"
+    "@octokit/rest": "^18.3.0"
   },
   "devDependencies": {
     "typescript": "^4.0.5"
