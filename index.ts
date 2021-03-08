@@ -60,7 +60,7 @@ const init = async () => {
 
     if (rerun) {
       // There seems to be a delay until the notification list is updated
-      await new Promise((resolve) => {
+      await new Promise<void>((resolve) => {
         console.log('Waiting before retrying.')
         setTimeout(() => resolve(), 2000)
       })

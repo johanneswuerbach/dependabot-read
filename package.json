@@ -9,11 +9,15 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
+  "repository": {
+    "url": "https://github.com/johanneswuerbach/dependabot-read",
+    "type": "git"
+  },
   "license": "UNLICENSED",
   "dependencies": {
     "@octokit/rest": "^18.0.12"
   },
   "devDependencies": {
-    "typescript": "^4.0.5"
+    "typescript": "^4.2.3"
   }
 }
