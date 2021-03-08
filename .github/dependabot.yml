@@ -4,10 +4,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    ignored_updates:
-      - match:
-          dependency_name: "@types/node"
-          version_requirement: ">=15.0.0"
+    ignore:
+      - dependency-name: "@types/node"
+        versions: [">=15.0.0"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
