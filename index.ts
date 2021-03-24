@@ -11,9 +11,26 @@ interface Notification {
   }
 }
 
+const maxRetry = 3
+
 const markAsRead = async  (octokit: Octokit, notification: Notification, logDetails?: string): Promise<boolean> => {
   console.log(`Marking as read: [${notification.repository.full_name}] ${notification.subject.title}${logDetails}`)
-  await octokit.activity.markThreadAsRead({ thread_id: parseInt(notification.id, 10) })
+
+  let lastError = null
+  for (let i = 0; i < maxRetry; i++ ) {
+    try {
+      await octokit.activity.markThreadAsRead({ thread_id: parseInt(notification.id, 10) })
+      lastError = null
+      break
+    } catch (e) {
+      console.log(`Failed`, e, 'retrying...')
+      lastError = e
+    }
+  }
+
+  if (lastError) {
+    throw lastError
+  }
 
   return true
 }
@@ -22,8 +39,23 @@ const ignoredUsers = ['dependabot[bot]', 'dependabot-preview[bot]']
 const ignoreReleasesInOrg = 'contentful'
 
 const maybeMarkPullRequestAsRead = async (octokit: Octokit, notification: Notification): Promise<boolean> => {
-  const prResp = await octokit.request(`GET ${notification.subject.url}`) as RestEndpointMethodTypes["pulls"]["get"]["response"]
-  const { data: pr } = prResp
+  let lastError = null
+  let pr = null
+  for (let i = 0; i < maxRetry; i++ ) {
+    try {
+      const prResp = await await octokit.request(`GET ${notification.subject.url}`) as RestEndpointMethodTypes["pulls"]["get"]["response"]
+      pr = prResp.data
+      lastError = null
+      break
+    } catch (e) {
+      console.log(`Failed`, e, 'retrying...')
+      lastError = e
+    }
+  }
+
+  if (lastError) {
+    throw lastError
+  }
 
   if (!ignoredUsers.includes(pr.user.login)) {
     return false
@@ -33,7 +65,12 @@ const maybeMarkPullRequestAsRead = async (octokit: Octokit, notification: Notifi
 }
 
 const init = async () => {
-  const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+  const octokit = new Octokit({
+    auth: process.env.GITHUB_TOKEN,
+    request: {
+      timeout: 10000
+    }
+  });
   const options = octokit.activity.listNotificationsForAuthenticatedUser
   let rerun = true
 
